@@ -1,0 +1,4 @@
+interface:
+  display_name: "Youyeetoo Release Image"
+  short_description: "Build, verify, and hand off update.img release artifacts"
+  default_prompt: "Use $youyeetoo-release-image to execute this Youyeetoo project task with evidence and safety checks."

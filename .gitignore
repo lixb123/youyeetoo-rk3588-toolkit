@@ -1,0 +1,41 @@
+# Build and runtime output
+**/build/
+**/dist/
+**/__pycache__/
+*.py[cod]
+*.o
+*.d
+*.log
+*.zip
+*.tar
+*.tar.gz
+
+# Vendor and binary artifacts
+*.so
+*.a
+*.bin
+*.img
+*.vhdx
+CameraSDK/
+
+# Credentials and local state
+*.pem
+*.key
+id_*
+.env
+.env.*
+!.env.example
+
+# Editors and OS files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Local evidence and generated documents
+evidence/
+tmp/
+out/
+*.docx
+*.pdf
+*.png

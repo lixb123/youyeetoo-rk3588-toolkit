@@ -1,0 +1,4 @@
+interface:
+  display_name: "Youyeetoo Camera SDK"
+  short_description: "Develop and diagnose the Insta360 camera SDK integration"
+  default_prompt: "Use $youyeetoo-camera-sdk to execute this Youyeetoo project task with evidence and safety checks."

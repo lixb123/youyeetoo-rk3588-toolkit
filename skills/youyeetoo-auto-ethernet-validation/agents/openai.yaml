@@ -1,0 +1,4 @@
+interface:
+  display_name: "Youyeetoo Ethernet Auto Validation"
+  short_description: "Run UART-controlled dual-NIC closed-loop validation"
+  default_prompt: "Use $youyeetoo-auto-ethernet-validation to run a reproducible UART-controlled Ethernet validation campaign."

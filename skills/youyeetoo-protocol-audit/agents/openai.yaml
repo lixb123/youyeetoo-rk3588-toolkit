@@ -1,0 +1,4 @@
+interface:
+  display_name: "Youyeetoo Protocol Audit"
+  short_description: "Reconcile protocol requirements across project documents"
+  default_prompt: "Use $youyeetoo-protocol-audit to execute this Youyeetoo project task with evidence and safety checks."

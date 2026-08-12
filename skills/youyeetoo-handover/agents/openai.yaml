@@ -1,0 +1,7 @@
+interface:
+  display_name: "Youyeetoo Handover"
+  short_description: "Build, package, and validate the Youyeetoo board project"
+  default_prompt: "Use $youyeetoo-handover to classify this task, follow the correct project workflow, and record the required handoff evidence."
+
+policy:
+  allow_implicit_invocation: true

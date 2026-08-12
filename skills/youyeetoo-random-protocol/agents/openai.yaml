@@ -1,0 +1,4 @@
+interface:
+  display_name: "Youyeetoo Random Protocol"
+  short_description: "Generate reproducible Ethernet and IPoC test vectors"
+  default_prompt: "Use $youyeetoo-random-protocol to generate reproducible valid and negative Ethernet/IPoC test vectors."

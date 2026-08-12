@@ -1,0 +1,35 @@
+[Unit]
+Description=Youyeetoo Board Controller Service
+After=network-online.target data.mount
+Wants=network-online.target data.mount
+
+[Service]
+Type=notify
+# Type=notify 让 systemd 等待 READY=1 信号后才认为服务启动完成。
+# WatchdogService.Open() 内部会发送 READY=1。
+NotifyAccess=main
+
+WorkingDirectory=/opt/youyeetoo_app
+ExecStartPre=/usr/bin/install -d -m 0755 /run/youyeetoo
+ExecStartPre=/bin/sh -c 'if mountpoint -q /data; then echo nvme_ok > /run/youyeetoo/storage_mode; else echo emmc_fallback > /run/youyeetoo/storage_mode; fi'
+ExecStartPre=/usr/bin/install -d -m 0755 /opt/youyeetoo_app/runtime_data/camera
+ExecStartPre=/usr/bin/install -d -m 0755 /var/opt/youyeetoo/runtime
+ExecStart=/opt/youyeetoo_app/bin/youyeetoo_app \
+    --output-dir /opt/youyeetoo_app/runtime_data/camera \
+    --can-config  /opt/youyeetoo_app/configs/can_config.txt
+
+# 看门狗：systemd 侧超时设为 60s。
+# 程序侧 feed_interval=10s，因此即使偶发延迟也有充足裕量。
+# 若程序 60s 内未发 WATCHDOG=1，systemd 会重启 service。
+WatchdogSec=60s
+
+Restart=always
+RestartSec=2
+RestartPreventExitStatus=0
+
+# 限制单次重启过于频繁（5次/10s 触发 StartLimitAction）
+StartLimitIntervalSec=10s
+StartLimitBurst=5
+
+[Install]
+WantedBy=multi-user.target

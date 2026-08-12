@@ -1,0 +1,30 @@
+# CAN 服务配置文件
+# 修改后重启 youyeetoo-app.service 生效
+# 所有 CAN 参数必须在此配置，源码中不硬编码任何设备名、CAN ID 或速率值
+
+# ─── SocketCAN 接口 ───────────────────────────────────────────────────────────
+# 接口名称由 /etc/network/interfaces 或 udev 规则确定
+# 波特率由系统脚本设置（ip link set canX type can bitrate 500000 && ip link set canX up）
+# 应用层不负责配置波特率，仅负责打开已配置好的接口
+primary_interface = can0
+backup_interface  = can0
+
+# ─── CAN ID（待整星 ICD TBD-002 确认后更新）─────────────────────────────────
+# 接收指令帧 CAN ID（星载计算机 → 载荷处理板）
+# 当前为占位值，ICD 确认后修改此处即可，无需重编译
+rx_command_id    = 0x101
+
+# 发送遥测帧 CAN ID（载荷处理板 → 星载计算机）
+tx_telemetry_id  = 0x201
+
+# ─── 健壮性参数 ───────────────────────────────────────────────────────────────
+# 当前 YY3588 仅确认一路 SocketCAN 接口（can0）；接收错误时保持同一路重试
+rx_error_threshold = 10
+
+# 周期遥测发送间隔（毫秒）；对应需求 CAN-007
+telemetry_interval_ms = 1000
+
+# ─── 指令映射 ─────────────────────────────────────────────────────────────────
+# CAN 指令字节 → 软件命令名映射配置文件
+# 协议层（CanProtocol）从此文件加载映射，业务层不感知字节编码
+command_map_path = /opt/youyeetoo_app/configs/can_command_map.txt

@@ -1,0 +1,27 @@
+# 相机槽位 → USB 物理端口路径映射（CAM-003）
+#
+# 格式：slot_name=usb_port_path
+#   slot_name:    cam0 / cam1 / cam2 / cam3（在 CAN 指令中使用）
+#   usb_port_path: /sys/bus/usb/devices/ 下的目录名（去掉末尾斜杠）
+#                  示例："1-1"、"6-1.2"
+#
+# 标定方法（板端执行一次，结果填入本文件）：
+#   for d in /sys/bus/usb/devices/*/; do
+#       v=$(cat "${d}idVendor" 2>/dev/null)
+#       [ "$v" = "2e1a" ] || continue
+#       echo "port=$(basename $d)  serial=$(cat ${d}serial 2>/dev/null)"
+#   done
+#
+# 注意：
+#   - 支持同型号多机及不同影石型号混插；设备身份始终使用 serial，不使用型号名
+#   - 同一台相机插入不同物理口后需重新标定并更新本文件
+#   - 端口路径对应 USB 拓扑，换 Hub 或换口后路径会变
+#   - 本文件固化进镜像后无需再改，除非硬件连接方式变更
+#
+# ─────────────────────────────────────────────────────────
+# 以下为占位示例，上板标定后替换为实际值：
+
+cam0=1-1
+cam1=6-1.1
+cam2=6-1.2
+cam3=6-1.3

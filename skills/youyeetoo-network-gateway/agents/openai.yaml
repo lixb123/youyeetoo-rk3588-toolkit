@@ -1,0 +1,4 @@
+interface:
+  display_name: "Youyeetoo Network Gateway"
+  short_description: "Implement and test the RK3588 Ethernet gateway and links"
+  default_prompt: "Use $youyeetoo-network-gateway to execute this Youyeetoo project task with evidence and safety checks."

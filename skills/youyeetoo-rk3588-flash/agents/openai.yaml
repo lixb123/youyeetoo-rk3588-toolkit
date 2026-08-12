@@ -1,0 +1,4 @@
+interface:
+  display_name: "Youyeetoo RK3588 Flash"
+  short_description: "Plan safe RK3588 flashing, rollback, and recovery"
+  default_prompt: "Use $youyeetoo-rk3588-flash to execute this Youyeetoo project task with evidence and safety checks."

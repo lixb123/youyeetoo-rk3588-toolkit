@@ -1,0 +1,4 @@
+interface:
+  display_name: "Youyeetoo Board Validation"
+  short_description: "Collect board evidence and close subsystem validation"
+  default_prompt: "Use $youyeetoo-board-validation to execute this Youyeetoo project task with evidence and safety checks."

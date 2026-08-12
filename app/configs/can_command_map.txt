@@ -1,0 +1,77 @@
+# CAN 指令字节 → 软件命令名映射
+# 格式：hex_byte | command_name | optional_default_params
+#
+# hex_byte：0x00~0xFF，对应 CAN 数据帧 data[0]
+# command_name：对应 telemetry_commands.txt 中注册的命令名
+# optional_default_params：指令预置参数，空表示无；可被帧内 data[1..7] ASCII 覆盖
+#
+# 待整星 ICD（TBD-002）确认后更新 hex_byte 列，command_name 列保持稳定
+# 修改此文件后重启服务生效，无需重编译
+
+# ─── 系统指令（0x01~0x0F）──────────────────────────────────────────────────
+0x01 | PING               |
+0x02 | GET_STATUS         |
+0x03 | GET_VERSION        |
+0x04 | SET_TIME           |
+0x05 | REBOOT             |
+
+# ─── 启动槽位（0x10~0x1F）──────────────────────────────────────────────────
+0x10 | GET_BOOT_SLOTS     |
+0x11 | SET_NEXT_BOOT_SLOT |
+
+# ─── USB 供电控制（0x20~0x2F）──────────────────────────────────────────────
+0x20 | USB_POWER_ON       |
+0x21 | USB_POWER_OFF      |
+0x22 | USB_POWER_RESET    |
+
+# ─── 相机指令（0x30~0x4F）──────────────────────────────────────────────────
+0x30 | CAMERA_INIT                |
+0x31 | CAMERA_GET_STATUS          |
+0x32 | CAMERA_GET_CAPTURE_STATUS  |
+0x33 | CAMERA_GET_BATTERY         |
+0x34 | CAMERA_GET_STORAGE         |
+0x35 | CAMERA_LIST_DEVICES        |
+0x36 | CAMERA_SET_MODE            |
+0x37 | CAMERA_SET_PARAM           |
+0x38 | CAMERA_GET_PARAM           |
+0x39 | CAMERA_TAKE_PHOTO          |
+0x3A | CAMERA_VIDEO_START         |
+0x3B | CAMERA_VIDEO_STOP          |
+0x3C | CAMERA_EXT_CAPTURE_START   |
+0x3D | CAMERA_EXT_CAPTURE_STOP    |
+0x3E | CAMERA_LIST_MEDIA          |
+0x3F | CAMERA_DOWNLOAD_MEDIA      |
+0x40 | CAMERA_BATCH_DOWNLOAD      |
+0x41 | CAMERA_DELETE_MEDIA        |
+# DELETE_ALL 需要双重确认；此处在指令字节中预置 confirm 参数
+# data[1..7] 若填入非空 ASCII 则可覆盖（用于额外参数扩展）
+0x42 | CAMERA_DELETE_ALL_MEDIA    | confirm=DELETE_ALL
+0x43 | CAMERA_GET_MEDIA_TIME      |
+0x44 | CAMERA_GET_LOG             |
+0x45 | CAMERA_PREVIEW_START       |
+0x46 | CAMERA_PREVIEW_STOP        |
+0x47 | CAMERA_SHUTDOWN_MAINT      |
+
+# ─── 存储管理（0x50~0x5F）──────────────────────────────────────────────────
+0x50 | STORAGE_LIST               |
+0x51 | STORAGE_DELETE             |
+0x52 | STORAGE_CLEAR_CONFIRMED    |
+
+# ─── 窄带载荷（0x60~0x6F）──────────────────────────────────────────────────
+0x60 | NB_LINK_SELECT             |
+0x61 | NB_GET_STATUS              |
+0x62 | NB_OTA_FORWARD_START       |
+0x63 | NB_OTA_FORWARD_STOP        |
+
+# ─── X 测控 OTA 接收（0x70~0x7F）───────────────────────────────────────────
+0x70 | XTC_OTA_RECV_ENABLE        |
+0x71 | XTC_OTA_GET_STATUS         |
+
+# ─── X 数传下传（0x80~0x8F）────────────────────────────────────────────────
+0x80 | XDT_SEND_FILE              |
+0x81 | XDT_SEND_QUEUE_START       |
+0x82 | XDT_SEND_QUEUE_STOP        |
+
+# ─── 日志（0x90~0x9F）──────────────────────────────────────────────────────
+0x90 | LOG_GET_SUMMARY            |
+0x91 | LOG_EXPORT                 |

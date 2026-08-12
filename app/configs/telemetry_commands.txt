@@ -1,0 +1,93 @@
+# command_name|category|task_name|repeat_count|output_dir|remote_path|local_path|delete_confirmed
+# Initial command set aligned to 风火轮载荷处理板软件需求输入_20260506_rk3568.md 6.2
+
+# System
+PING|system|system.ping|1||||false
+GET_STATUS|system|system.get_status|1||||false
+SET_TIME|system|system.set_time|1||||false
+GET_VERSION|system|system.get_version|1||||false
+REBOOT|system|system.reboot|1||||false
+
+# Boot
+GET_BOOT_SLOTS|boot|boot.get_slots|1||||false
+SET_NEXT_BOOT_SLOT|boot|boot.set_next_slot|1||||false
+
+# USB
+USB_POWER_ON|usb|usb.power.on|1||||false
+USB_POWER_OFF|usb|usb.power.off|1||||false
+USB_POWER_RESET|usb|usb.power.reset|1||||false
+
+# Camera
+# Multi-model/multi-camera routing uses the unique SDK serial, not the model name:
+# CAMERA_LIST_MEDIA camera_serial=IAHEA2510PYWHN
+CAMERA_INIT|camera|camera.init|1||||false
+CAMERA_GET_STATUS|camera|camera.get_status|1||||false
+CAMERA_GET_CAPTURE_STATUS|camera|camera.get_capture_status|1||||false
+CAMERA_GET_BATTERY|camera|camera.get_battery|1||||false
+CAMERA_GET_STORAGE|camera|camera.get_storage|1||||false
+CAMERA_LIST_DEVICES|camera|camera.list_devices|1||||false
+# Runtime parameter examples:
+# CAMERA_SET_MODE mode=photo_single
+# CAMERA_SET_MODE mode=video_normal
+CAMERA_SET_MODE|camera|camera.set_mode|1||||false
+# Runtime parameter examples:
+# CAMERA_SET_PARAM scope=photo ev=1 wb=auto
+# CAMERA_SET_PARAM scope=video exposure_mode=manual iso=100 shutter=0.016667 sharpness=high
+# CAMERA_SET_PARAM scope=photo lens=front stitching=off timer_sec=3
+CAMERA_SET_PARAM|camera|camera.set_param|1||||false
+# CAMERA_GET_PARAM writes /var/opt/youyeetoo/runtime/camera_param_query.json
+# Runtime parameter example:
+# CAMERA_GET_PARAM scope=photo
+CAMERA_GET_PARAM|camera|camera.get_param|1||||false
+CAMERA_TAKE_PHOTO|camera|camera.take_photo_download|1|runtime_data/camera|||false
+CAMERA_VIDEO_START|camera|camera.start_recording|1||||false
+CAMERA_VIDEO_STOP|camera|camera.stop_recording|1||||false
+# Runtime parameter example:
+# CAMERA_EXT_CAPTURE_START mode=timeshift
+# CAMERA_EXT_CAPTURE_STOP mode=timeshift
+CAMERA_EXT_CAPTURE_START|camera|camera.ext_capture.start|1||||false
+CAMERA_EXT_CAPTURE_STOP|camera|camera.ext_capture.stop|1||||false
+CAMERA_LIST_MEDIA|camera|camera.list_media|1||||false
+CAMERA_DOWNLOAD_MEDIA|camera|camera.download_media|1|runtime_data/camera|@LAST_MEDIA_FIRST||false
+# CAMERA_BATCH_DOWNLOAD reuses the most recent CAMERA_LIST_MEDIA result.
+# Runtime parameter examples:
+# CAMERA_BATCH_DOWNLOAD time_from=20260226_170000
+# CAMERA_BATCH_DOWNLOAD time_from=20260226_170000 time_to=20260226_180200
+CAMERA_BATCH_DOWNLOAD|camera|camera.batch_download|1|runtime_data/camera/batch|||false
+CAMERA_DELETE_MEDIA|camera|camera.delete_media|1||@LAST_MEDIA_FIRST||true
+# Runtime parameter example:
+# CAMERA_DELETE_ALL_MEDIA confirm=DELETE_ALL
+CAMERA_DELETE_ALL_MEDIA|camera|camera.delete_all_media|1||||true
+# CAMERA_GET_MEDIA_TIME writes /var/opt/youyeetoo/runtime/camera_media_time.json
+CAMERA_GET_MEDIA_TIME|camera|camera.get_media_time|1||||false
+# CAMERA_GET_LOG writes /var/opt/youyeetoo/runtime/camera_log_query.json
+CAMERA_GET_LOG|camera|camera.get_log|1||||false
+# Runtime parameter example:
+# CAMERA_PREVIEW_START resolution=1080p30 audio=1 video=1 gyro=1 using_lrv=1
+CAMERA_PREVIEW_START|camera|camera.preview.start|1||||false
+CAMERA_PREVIEW_STOP|camera|camera.preview.stop|1||||false
+CAMERA_SHUTDOWN_MAINT|camera|camera.shutdown_maint|1||||false
+
+# Storage
+STORAGE_LIST|storage|storage.list|1||||false
+STORAGE_DELETE|storage|storage.delete|1||/var/opt/youyeetoo/data/example.bin||false
+STORAGE_CLEAR_CONFIRMED|storage|storage.clear_confirmed|1||||true
+
+# Narrowband payload
+NB_LINK_SELECT|narrowband|narrowband.link_select|1||||false
+NB_GET_STATUS|narrowband|narrowband.get_status|1||||false
+NB_OTA_FORWARD_START|narrowband|narrowband.ota_forward.start|1||||false
+NB_OTA_FORWARD_STOP|narrowband|narrowband.ota_forward.stop|1||||false
+
+# X telemetry control / OTA receive
+XTC_OTA_RECV_ENABLE|ota_receive|ota_receive.enable|1||||false
+XTC_OTA_GET_STATUS|ota_receive|ota_receive.get_status|1||||false
+
+# X downlink
+XDT_SEND_FILE|downlink|downlink.send_file|1||/var/opt/youyeetoo/downlink/queue/example.bin||false
+XDT_SEND_QUEUE_START|downlink|downlink.send_queue.start|1||||false
+XDT_SEND_QUEUE_STOP|downlink|downlink.send_queue.stop|1||||false
+
+# Log
+LOG_GET_SUMMARY|log|log.get_summary|1||||false
+LOG_EXPORT|log|log.export|1||||false
