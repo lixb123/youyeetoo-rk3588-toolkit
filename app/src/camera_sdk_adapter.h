@@ -31,6 +31,7 @@ public:
     bool CaptureCurrentStatus() const;
     const std::string& CurrentSerialNumber() const;
     const std::string& CurrentModelKey() const;
+    CameraInfo CurrentCameraInfo() const;
 
     bool GetBatteryStatus(BatteryInfo* status);
     bool GetStorageState(StorageInfo* status);
@@ -94,6 +95,8 @@ private:
     bool preview_active_ = false;
     std::string last_mode_hint_ = "unknown";
     std::string current_serial_number_;
+    std::string current_camera_name_;
+    std::string current_firmware_version_;
 };
 
 }  // namespace youyeetoo

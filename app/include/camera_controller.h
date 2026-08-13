@@ -108,6 +108,7 @@ public:
     const CameraControllerSnapshot& snapshot() const;
     bool HasActiveTask() const;
     bool IsTaskFinished() const;
+    void SetDeviceListSupplements(const std::vector<CameraInfo>& cameras);
 
     static std::string DeviceStateToString(CameraDeviceState state);
     static std::string TaskTypeToString(CameraTaskType type);
@@ -206,6 +207,7 @@ private:
     CameraControllerSnapshot snapshot_;
     TaskContext task_;
     bool has_task_ = false;
+    std::vector<CameraInfo> device_list_supplements_;
     std::chrono::steady_clock::time_point next_poll_time_ = std::chrono::steady_clock::now();
     std::chrono::steady_clock::time_point next_reconnect_time_ = std::chrono::steady_clock::now();
 };

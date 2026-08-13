@@ -59,8 +59,8 @@ $cmdLabel = New-Object Windows.Forms.Label; $cmdLabel.Text = '相机指令'; $cm
 $commands = @('CAMERA_LIST_DEVICES','CAMERA_INIT','CAMERA_GET_STATUS','CAMERA_GET_CAPTURE_STATUS','CAMERA_GET_BATTERY','CAMERA_GET_STORAGE','CAMERA_TAKE_PHOTO','CAMERA_VIDEO_START','CAMERA_VIDEO_STOP','CAMERA_LIST_MEDIA','CAMERA_SET_MODE','CAMERA_SET_PARAM','CAMERA_GET_PARAM')
 $cmdCombo = New-Object Windows.Forms.ComboBox; $cmdCombo.Location = New-Object Drawing.Point(12,40); $cmdCombo.Size = New-Object Drawing.Size(260,28); $cmdCombo.DropDownStyle = 'DropDownList'
 $commands | ForEach-Object { [void]$cmdCombo.Items.Add($_) }; $cmdCombo.SelectedIndex = 0; $cmdPanel.Controls.Add($cmdCombo)
-$serialLabel = New-Object Windows.Forms.Label; $serialLabel.Text = '目标序列号（可选）'; $serialLabel.Location = New-Object Drawing.Point(12,78); $serialLabel.Size = New-Object Drawing.Size(160,25); $cmdPanel.Controls.Add($serialLabel)
-$serialBox = New-Object Windows.Forms.TextBox; $serialBox.Location = New-Object Drawing.Point(12,105); $serialBox.Size = New-Object Drawing.Size(260,28); $cmdPanel.Controls.Add($serialBox)
+$serialLabel = New-Object Windows.Forms.Label; $serialLabel.Text = '目标相机'; $serialLabel.Location = New-Object Drawing.Point(12,78); $serialLabel.Size = New-Object Drawing.Size(160,25); $cmdPanel.Controls.Add($serialLabel)
+$cameraBox = New-Object Windows.Forms.ComboBox; $cameraBox.Location = New-Object Drawing.Point(12,105); $cameraBox.Size = New-Object Drawing.Size(360,28); $cameraBox.DropDownStyle = 'DropDownList'; $cameraBox.DisplayMember = 'Display'; [void]$cameraBox.Items.Add([pscustomobject]@{ Display='自动选择（不指定序列号）'; Serial='' }); $cameraBox.SelectedIndex = 0; $cmdPanel.Controls.Add($cameraBox)
 $argsLabel = New-Object Windows.Forms.Label; $argsLabel.Text = '附加参数（可选）'; $argsLabel.Location = New-Object Drawing.Point(12,138); $argsLabel.Size = New-Object Drawing.Size(160,25); $cmdPanel.Controls.Add($argsLabel)
 $argsBox = New-Object Windows.Forms.TextBox; $argsBox.Location = New-Object Drawing.Point(12,163); $argsBox.Size = New-Object Drawing.Size(260,28); $cmdPanel.Controls.Add($argsBox)
 $sendBtn = New-Button '发送指令' 12 198 110 -parent $cmdPanel
@@ -113,7 +113,10 @@ function Parse-DeviceList([string]$text) {
   if ($start -lt 0 -or $end -le $start) { Add-Log '未找到设备 JSON，请查看原始反馈。'; return }
   try {
     $obj = $text.Substring($start, $end-$start+1) | ConvertFrom-Json
+    $previousSerial = if ($cameraBox.SelectedItem) { [string]$cameraBox.SelectedItem.Serial } else { '' }
     $grid.Rows.Clear(); $i=0
+    $cameraBox.Items.Clear()
+    [void]$cameraBox.Items.Add([pscustomobject]@{ Display='自动选择（不指定序列号）'; Serial='' })
     foreach ($cam in @($obj.cameras)) {
       $serial = Get-JsonValue $cam 'serial'
       $model = Get-JsonValue $cam 'model_key'
@@ -122,7 +125,14 @@ function Parse-DeviceList([string]$text) {
       $firmware = Get-JsonValue $cam 'firmware_version'
       $capabilities = Get-JsonValue $cam 'capabilities'
       [void]$grid.Rows.Add($i, $serial, $model, $firmware, $capabilities); $i++
+      $displayModel = if ($model) { $model } else { '未知型号' }
+      [void]$cameraBox.Items.Add([pscustomobject]@{ Display="$displayModel | $serial"; Serial=$serial })
     }
+    $cameraBox.SelectedIndex = 0
+    for ($index = 0; $index -lt $cameraBox.Items.Count; $index++) {
+      if ([string]$cameraBox.Items[$index].Serial -eq $previousSerial -and $previousSerial) { $cameraBox.SelectedIndex = $index; break }
+    }
+    if (-not $previousSerial -and $cameraBox.Items.Count -gt 1) { $cameraBox.SelectedIndex = 1 }
     Add-Log "设备列表已更新，共 $($obj.camera_count) 台。"
   } catch { Add-Log "设备 JSON 解析失败: $($_.Exception.Message)" }
 }
@@ -155,21 +165,28 @@ $recoverBtn.Add_Click({
   try { $script:port.Write("`nconsole`n"); Add-Log '已发送 console；等待 Linux 提示符。' } catch { Add-Log "发送失败: $($_.Exception.Message)" }
 })
 $sendBtn.Add_Click({
-  $serial = $serialBox.Text.Trim(); $suffix = if ($serial) { " camera_serial=$serial" } else { '' }
+  $serial = if ($cameraBox.SelectedItem) { ([string]$cameraBox.SelectedItem.Serial).Trim() } else { '' }; $suffix = if ($serial) { " camera_serial=$serial" } else { '' }
   if ($serial -and $serial -notmatch '^[A-Za-z0-9._:-]+$') { [Windows.Forms.MessageBox]::Show('序列号包含不允许的字符。','参数错误'); return }
   $extra = $argsBox.Text.Trim()
   if ($extra -and $extra -notmatch '^[A-Za-z0-9_./:=,@+ -]+$') { [Windows.Forms.MessageBox]::Show('附加参数只能包含字母、数字、空格和常用参数符号。','参数错误'); return }
   if ($extra) { $suffix += " $extra" }
   $journal = "; journalctl -u youyeetoo-app.service -n 80 --no-pager 2>/dev/null | grep 'last_command=$($cmdCombo.Text)' | tail -n 2"
-  $readback = if ($cmdCombo.Text -eq 'CAMERA_LIST_DEVICES') { "; sleep 8$journal; cat /mnt/userdata/youyeetoo/runtime/camera_device_list.json 2>/dev/null || cat /var/opt/youyeetoo/runtime/camera_device_list.json 2>/dev/null" } else { "; sleep 8$journal" }
+  $readback = if ($cmdCombo.Text -eq 'CAMERA_LIST_DEVICES') { "; sleep 8$journal; cat /var/opt/youyeetoo/runtime/camera_device_list.json 2>/dev/null || cat /mnt/userdata/youyeetoo/runtime/camera_device_list.json 2>/dev/null" } else { "; sleep 8$journal" }
   $callback = if ($cmdCombo.Text -eq 'CAMERA_LIST_DEVICES') { { param($response) Parse-DeviceList $response } } else { $null }
   Start-Request ("printf '%s\n' '$($cmdCombo.Text)$suffix' >> /var/opt/youyeetoo/runtime/telemetry_command_request.txt$readback") $callback
 })
 $refreshBtn.Add_Click({
-  Start-Request "printf '%s\n' 'CAMERA_LIST_DEVICES' >> /var/opt/youyeetoo/runtime/telemetry_command_request.txt; sleep 8; journalctl -u youyeetoo-app.service -n 80 --no-pager 2>/dev/null | grep 'last_command=CAMERA_LIST_DEVICES' | tail -n 2; cat /mnt/userdata/youyeetoo/runtime/camera_device_list.json 2>/dev/null || cat /var/opt/youyeetoo/runtime/camera_device_list.json 2>/dev/null" { param($response) Parse-DeviceList $response }
+  Start-Request "printf '%s\n' 'CAMERA_LIST_DEVICES' >> /var/opt/youyeetoo/runtime/telemetry_command_request.txt; sleep 8; journalctl -u youyeetoo-app.service -n 80 --no-pager 2>/dev/null | grep 'last_command=CAMERA_LIST_DEVICES' | tail -n 2; cat /var/opt/youyeetoo/runtime/camera_device_list.json 2>/dev/null || cat /mnt/userdata/youyeetoo/runtime/camera_device_list.json 2>/dev/null" { param($response) Parse-DeviceList $response }
 })
 $customBtn.Add_Click({ if ($customBox.Text.Trim()) { Start-Request $customBox.Text.Trim() } })
-$grid.Add_SelectionChanged({ if ($grid.SelectedRows.Count -gt 0) { $serialBox.Text = [string]$grid.SelectedRows[0].Cells[1].Value } })
+$grid.Add_SelectionChanged({
+  if ($grid.SelectedRows.Count -gt 0) {
+    $selectedSerial = [string]$grid.SelectedRows[0].Cells[1].Value
+    for ($index = 0; $index -lt $cameraBox.Items.Count; $index++) {
+      if ([string]$cameraBox.Items[$index].Serial -eq $selectedSerial) { $cameraBox.SelectedIndex = $index; break }
+    }
+  }
+})
 $form.Add_FormClosing({ Close-Port; $timer.Stop() })
 Add-Log '提示：先选择 COM3 并连接；相机查询由板端 CameraSDK worker 执行。'
 [void]$form.ShowDialog()

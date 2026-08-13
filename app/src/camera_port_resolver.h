@@ -2,6 +2,9 @@
 
 #include <map>
 #include <string>
+#include <vector>
+
+#include "camera_app.h"
 
 namespace youyeetoo {
 
@@ -26,6 +29,9 @@ public:
     // CAMERA_USB_VENDOR_ID 和可选的 CAMERA_USB_PRODUCT_ID（逗号分隔）过滤。
     // 端口路径示例："1-1"、"6-1.2"，即 sysfs 目录名去掉末尾斜杠。
     static std::map<std::string, std::string> ScanUsbSerials();
+
+    // Supplement SDK enumeration with all physically connected Insta360 USB devices.
+    static std::vector<CameraInfo> ScanUsbCameras();
 
     // 加载配置文件，返回 {slot_name → usb_port_path}。
     // 配置格式：每行 "slot_name=usb_port_path"，# 开头为注释，空行忽略。

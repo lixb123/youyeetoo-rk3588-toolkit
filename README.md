@@ -83,6 +83,8 @@ Agent A-CAM -> UART development bundle -> Agent D-VAL
 4. 板端安装脚本会备份当前二进制和 SDK 库、核对 SHA-256、重启服务并执行健康检查；失败时自动回滚。
 5. 使用 `tools/rk-cam-uart/` 顺序执行设备枚举、`CAMERA_INIT`、状态、电量、存储和媒体查询。多相机必须用唯一序列号路由。
 
+如果 UART 连续在不同分帧超时或进入 RK3588 FIQ 调试器，应停止大文件串口重试，保留 UART 作为恢复控制台，临时使用已经 Link Up 的管理网口传输同一个开发包。板端 SHA-256 必须与电脑端一致，安装仍使用同一套备份、健康检查和自动回滚脚本；验证完成后关闭临时文件服务并删除暂存包。
+
 `dispatch_ok` 只表示命令被路由接受。验证成功必须同时看到目标 USB 设备、正确链路速率、最新 `connected=yes` 和 worker 完成结果。相机从 USB 总线消失时应停止查询并检查硬件链路。
 
 ## 安装 Codex skills

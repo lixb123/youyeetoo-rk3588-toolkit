@@ -46,6 +46,7 @@ private:
     std::string ResolveTargetSerial(const CameraTaskRequest& request) const;
     void ConfigureSession(CameraSession* session);
     void AdjustRequestForSession(CameraTaskRequest* request, const CameraSession& session) const;
+    std::vector<CameraInfo> CollectKnownCameras() const;
 
     // CAM-003: 将 cam0/cam1/... 槽位名解析为真实序列号
     // 返回 true 表示找到有效序列号，false 表示槽位未配置或相机未接入

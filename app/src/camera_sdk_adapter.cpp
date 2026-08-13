@@ -607,6 +607,8 @@ bool CameraSdkAdapter::OpenCamera(const std::string& serial_number, int timeout_
     current_model_key_ = CameraTypeToModelKey(selected->camera_type);
     current_capabilities_ = CameraCapabilities(selected->camera_type);
     current_serial_number_ = selected->serial_number;
+    current_camera_name_ = selected->camera_name;
+    current_firmware_version_ = selected->fw_version;
     timeout_ms_ = timeout_ms;
     camera_->SetTimeout(timeout_ms_);
     const bool opened = camera_->Open();
@@ -623,6 +625,8 @@ bool CameraSdkAdapter::OpenCamera(const std::string& serial_number, int timeout_
         current_model_key_ = "unknown";
         current_capabilities_ = "status,capture,battery,storage,media,photo,video";
         current_serial_number_.clear();
+        current_camera_name_.clear();
+        current_firmware_version_.clear();
     } else {
         std::cout << "[CameraSdkAdapter] Camera::Open() succeeded serial="
                   << current_serial_number_
@@ -645,6 +649,8 @@ void CameraSdkAdapter::CloseCamera() {
     preview_active_ = false;
     last_mode_hint_ = "unknown";
     current_serial_number_.clear();
+    current_camera_name_.clear();
+    current_firmware_version_.clear();
 }
 
 bool CameraSdkAdapter::IsConnected() const {
@@ -661,6 +667,16 @@ const std::string& CameraSdkAdapter::CurrentSerialNumber() const {
 
 const std::string& CameraSdkAdapter::CurrentModelKey() const {
     return current_model_key_;
+}
+
+CameraInfo CameraSdkAdapter::CurrentCameraInfo() const {
+    return CameraInfo{
+        current_serial_number_,
+        current_camera_name_.empty() ? "(active-session)" : current_camera_name_,
+        current_firmware_version_.empty() ? "(active-session)" : current_firmware_version_,
+        current_model_key_,
+        current_capabilities_,
+    };
 }
 
 bool CameraSdkAdapter::GetBatteryStatus(BatteryInfo* status) {

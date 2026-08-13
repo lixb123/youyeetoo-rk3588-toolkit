@@ -9,6 +9,7 @@ JOURNALCTL="${JOURNALCTL:-journalctl}"
 PROCESS_CHECK="${PROCESS_CHECK:-1}"
 CAMERA_USB_VENDOR_ID="${CAMERA_USB_VENDOR_ID:-2e1a}"
 CAMERA_USB_PRODUCT_ID="${CAMERA_USB_PRODUCT_ID:-}"
+CAMERA_CONNECT_WAIT_SECONDS="${CAMERA_CONNECT_WAIT_SECONDS:-60}"
 REQUIRE_CAMERA=0
 
 if [[ "${1:-}" == "--require-camera" ]]; then
@@ -60,8 +61,13 @@ if [[ "${REQUIRE_CAMERA}" -eq 1 ]]; then
       failures+=("camera USB ${expected_usb} missing")
     fi
   fi
-  latest_status="$("${JOURNALCTL}" -u "${SERVICE_NAME}" -n 200 --no-pager 2>/dev/null |
-    grep 'profile=BOARD_CONTROLLER' | tail -n 1 || true)"
+  latest_status=""
+  for _ in $(seq 0 "${CAMERA_CONNECT_WAIT_SECONDS}"); do
+    latest_status="$("${JOURNALCTL}" -u "${SERVICE_NAME}" -n 200 --no-pager 2>/dev/null |
+      grep 'profile=BOARD_CONTROLLER' | tail -n 1 || true)"
+    [[ "${latest_status}" == *"connected=yes"* ]] && break
+    sleep 1
+  done
   if [[ "${latest_status}" != *"connected=yes"* ]]; then
     failures+=("latest service status is not connected=yes")
   fi

@@ -58,6 +58,24 @@ bool ProductAllowed(const std::string& product, const std::string& configured) {
     return false;
 }
 
+std::string ModelKeyFromProduct(const std::string& product) {
+    std::string compact;
+    for (const unsigned char ch : product) {
+        if (std::isalnum(ch) != 0) {
+            compact.push_back(static_cast<char>(std::tolower(ch)));
+        }
+    }
+    if (compact.find("insta360x4air") != std::string::npos) return "Insta360X4Air";
+    if (compact.find("insta360x5") != std::string::npos) return "Insta360X5";
+    if (compact.find("insta360x4") != std::string::npos) return "Insta360X4";
+    if (compact.find("insta360x3") != std::string::npos) return "Insta360X3";
+    if (compact.find("insta360onex2") != std::string::npos) return "Insta360OneX2";
+    if (compact.find("insta360oners") != std::string::npos) return "Insta360OneRS";
+    if (compact.find("insta360oner") != std::string::npos) return "Insta360OneR";
+    if (compact.find("insta360onex") != std::string::npos) return "Insta360OneX";
+    return "Unknown";
+}
+
 }  // namespace
 
 // ─── public static ───────────────────────────────────────────────────────────
@@ -135,6 +153,40 @@ std::map<std::string, std::string> CameraPortResolver::ScanUsbSerials() {
         result[port_path] = serial;
     }
 
+    return result;
+}
+
+std::vector<CameraInfo> CameraPortResolver::ScanUsbCameras() {
+    std::vector<CameraInfo> result;
+    std::error_code ec;
+    if (!fs::is_directory(kUsbDevicesRoot, ec)) {
+        return result;
+    }
+
+    for (const auto& entry : fs::directory_iterator(kUsbDevicesRoot, ec)) {
+        if (ec) break;
+        const std::string port_path = entry.path().filename().string();
+        if (port_path.find('-') == std::string::npos ||
+            port_path.find(':') != std::string::npos) {
+            continue;
+        }
+
+        const std::string vendor = ReadSysfsLine((entry.path() / "idVendor").string());
+        if (vendor != EnvOrDefault("CAMERA_USB_VENDOR_ID", kDefaultVendorId)) continue;
+        const std::string product_id = ReadSysfsLine((entry.path() / "idProduct").string());
+        if (!ProductAllowed(product_id, EnvOrDefault("CAMERA_USB_PRODUCT_ID", ""))) continue;
+
+        const std::string serial = ReadSysfsLine((entry.path() / "serial").string());
+        if (serial.empty()) continue;
+        const std::string product = ReadSysfsLine((entry.path() / "product").string());
+        result.push_back(CameraInfo{
+            serial,
+            product.empty() ? "Insta360 USB camera" : product,
+            "",
+            ModelKeyFromProduct(product),
+            "status,capture,battery,storage,media,photo,video",
+        });
+    }
     return result;
 }
 

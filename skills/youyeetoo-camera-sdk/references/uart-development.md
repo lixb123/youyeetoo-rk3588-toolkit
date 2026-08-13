@@ -28,6 +28,16 @@ powershell -ExecutionPolicy Bypass -File .\scripts\uart_deploy_camera.ps1 `
 
 The sender uses 1500000 baud, 8N1, no flow control, 32 KiB frames, CRC32 per frame, ACK validation with retry, an explicit abort frame, and whole-file SHA-256. It bootstraps a Python receiver through the existing root console. Use `-Install` only after confirming that the console does not echo binary data and passwordless or already-authenticated `sudo` is available. If the UART enters the RK3588 `debug>` FIQ prompt, send `console` to return to the Linux console.
 
+If repeated UART transfers enter the RK3588 FIQ debugger or time out at different frames, stop retrying the bulk transfer. Keep UART open as the recovery console and use an already linked Ethernet management interface only for the bundle transfer:
+
+1. Record PC and board addresses, routes, carrier, speed, and the active management path before changes.
+2. Prefer an existing address. If one is required, add a temporary secondary address instead of clearing the interface.
+3. Serve or copy only the bundle, then verify its board-side SHA-256 before installation.
+4. Run the same bundle installer, health check, and rollback workflow shown below.
+5. Stop the temporary transfer service and remove the staged bundle after validation.
+
+This fallback remains an app-only workflow. It does not authorize rootfs, kernel, boot-chain, partition, or firmware changes.
+
 ## Install And Recover
 
 The bundle contains its board tools. Extract it and run:
@@ -38,7 +48,7 @@ tar -xzf /tmp/youyeetoo-uart-dev.tar.gz -C "$tmpdir"
 sudo "$tmpdir/tools/install_uart_dev_bundle.sh" /tmp/youyeetoo-uart-dev.tar.gz
 ```
 
-The installer verifies the manifest, saves the active app and optional SDK under `/opt/youyeetoo_app/dev/backups/<timestamp>`, stops and restarts `youyeetoo-app.service`, and automatically rolls back when the health check fails.
+The installer verifies the manifest, saves the active app and optional SDK under `/opt/youyeetoo_app/dev/backups/<timestamp>`, stops and restarts `youyeetoo-app.service`, waits up to 60 seconds for a required camera to reconnect, and automatically rolls back when the health check fails. Override the wait with `CAMERA_CONNECT_WAIT_SECONDS` only when the hardware needs a known longer startup interval.
 
 Manual recovery:
 

@@ -1,5 +1,6 @@
 #include "camera_controller.h"
 
+#include <algorithm>
 #include <atomic>
 #include <cctype>
 #include <chrono>
@@ -177,6 +178,10 @@ bool CameraController::IsTaskFinished() const {
            snapshot_.task_state == CameraTaskState::Failed ||
            snapshot_.task_state == CameraTaskState::Timeout ||
            snapshot_.task_state == CameraTaskState::Cancelled;
+}
+
+void CameraController::SetDeviceListSupplements(const std::vector<CameraInfo>& cameras) {
+    device_list_supplements_ = cameras;
 }
 
 std::string CameraController::DeviceStateToString(CameraDeviceState state) {
@@ -668,7 +673,34 @@ bool CameraController::BeginListDevicesTask() {
     SetDeviceState(CameraDeviceState::Busy);
     SetTaskState(CameraTaskState::Listing);
 
-    const std::vector<CameraInfo> cameras = adapter_->ListCameras();
+    std::vector<CameraInfo> cameras = adapter_->ListCameras();
+    for (const auto& supplement : device_list_supplements_) {
+        if (supplement.serial_number.empty()) continue;
+        const auto existing = std::find_if(
+            cameras.begin(), cameras.end(), [&supplement](const CameraInfo& camera) {
+                return camera.serial_number == supplement.serial_number;
+            });
+        if (existing == cameras.end()) {
+            cameras.push_back(supplement);
+            continue;
+        }
+        if ((existing->camera_name.empty() || existing->camera_name == "(active-session)") &&
+            !supplement.camera_name.empty()) {
+            existing->camera_name = supplement.camera_name;
+        }
+        if ((existing->firmware_version.empty() ||
+             existing->firmware_version == "(active-session)") &&
+            !supplement.firmware_version.empty()) {
+            existing->firmware_version = supplement.firmware_version;
+        }
+        if ((existing->model_key.empty() || existing->model_key == "Unknown" ||
+             existing->model_key == "unknown") && !supplement.model_key.empty()) {
+            existing->model_key = supplement.model_key;
+        }
+        if (existing->capabilities.empty() && !supplement.capabilities.empty()) {
+            existing->capabilities = supplement.capabilities;
+        }
+    }
     std::string output_path;
     std::string error_message;
     if (!WriteDeviceListResultFile(cameras, &output_path, &error_message)) {

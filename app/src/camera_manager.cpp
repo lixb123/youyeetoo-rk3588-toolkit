@@ -1,5 +1,6 @@
 #include "camera_manager.h"
 
+#include <algorithm>
 #include <iostream>
 #include <utility>
 
@@ -96,6 +97,9 @@ bool CameraManager::StartTask(const CameraTaskRequest& request) {
 
     CameraTaskRequest adjusted_request = resolved_request;
     AdjustRequestForSession(&adjusted_request, *session);
+    if (adjusted_request.type == CameraTaskType::ListDevices) {
+        session->controller->SetDeviceListSupplements(CollectKnownCameras());
+    }
     last_active_session_key_ = SessionKeyForSerial(session->target_serial);
     return session->controller->StartTask(adjusted_request);
 }
@@ -256,6 +260,33 @@ void CameraManager::AdjustRequestForSession(CameraTaskRequest* request,
     } else if (request->output_dir == default_batch_output_dir) {
         request->output_dir = session_default_output_dir + "/batch";
     }
+}
+
+std::vector<CameraInfo> CameraManager::CollectKnownCameras() const {
+    std::vector<CameraInfo> cameras = CameraPortResolver::ScanUsbCameras();
+    const auto merge_session = [&cameras](const CameraSession* session) {
+        if (session == nullptr || session->adapter == nullptr ||
+            !session->adapter->IsConnected()) {
+            return;
+        }
+        const CameraInfo info = session->adapter->CurrentCameraInfo();
+        if (info.serial_number.empty()) return;
+        const auto existing = std::find_if(
+            cameras.begin(), cameras.end(), [&info](const CameraInfo& camera) {
+                return camera.serial_number == info.serial_number;
+            });
+        if (existing == cameras.end()) {
+            cameras.push_back(info);
+        } else {
+            *existing = info;
+        }
+    };
+
+    merge_session(default_session_.get());
+    for (const auto& entry : named_sessions_) {
+        merge_session(entry.second.get());
+    }
+    return cameras;
 }
 
 bool CameraManager::ResolveSlotName(const std::string& slot_name,
